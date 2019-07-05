@@ -34,7 +34,7 @@ public class MainActivity  extends AppCompatActivity
     }
 
 
-//**************************************************************************************************
+    //**************************************************************************************************
 //
     //! Add all button, text (control) to MainActivity.
     //! \param void
@@ -66,7 +66,7 @@ public class MainActivity  extends AppCompatActivity
         btnOpen = findViewById(R.id.btnOpen);
         btnClose = findViewById(R.id.btnClose);
     }
-//**************************************************************************************************
+    //**************************************************************************************************
     //
     //! Handling input events
     //! \param View v from activity_main.xml
@@ -135,7 +135,7 @@ public class MainActivity  extends AppCompatActivity
     }
 
 
-//**************************************************************************************************
+    //**************************************************************************************************
     //
     //! Handling the control events
     //! \param View v from activity_main.xml
@@ -183,14 +183,22 @@ public class MainActivity  extends AppCompatActivity
     //**********************************************************************************************
     public void operatorEvent(View v)
     {
-        if (resultBuffer.equals("0")) return;
+        if (resultBuffer.equals("0")&& v.getId() != btnMinus.getId() && v.getId() != btnOpen.getId()) return;
+//        if (v.getId() != btnMinus.getId() && isOperator( c: resultBuffer.charAt(resultBuffer.length())))
+//        {
+//            resultBuffer = resultBuffer.substring(0,resultBuffer.length() -1 );
+////            resultBuffer +=
+//        }
         if(v.getId() == btnPlus.getId())
         {
             resultBuffer += "+";
         }
         else if(v.getId() == btnMinus.getId())
         {
-            resultBuffer += "-";
+            if(resultBuffer.equals("0"))
+                resultBuffer = "-";
+            else
+                resultBuffer += "-";
         }
         else if(v.getId() == btnMulti.getId())
         {
@@ -206,7 +214,10 @@ public class MainActivity  extends AppCompatActivity
         }
         else if(v.getId() == btnOpen.getId())
         {
-            resultBuffer += "(";
+            if(resultBuffer.equals("0"))
+                resultBuffer = "(";
+            else
+                resultBuffer += "(";
         }
         else if(v.getId() == btnClose.getId())
         {
@@ -260,7 +271,7 @@ public class MainActivity  extends AppCompatActivity
         }
     }
 
-//**************************************************************************************************
+    //**************************************************************************************************
 //
     //! To determine the precedence of operator
     //! \param char ch
@@ -288,7 +299,7 @@ public class MainActivity  extends AppCompatActivity
         }
         return -1;
     }
-//**************************************************************************************************
+    //**************************************************************************************************
     //
     //! The main method that converts given infix expression
     // to postfix expression.
@@ -343,7 +354,7 @@ public class MainActivity  extends AppCompatActivity
         }
         return result;
     }
-//**************************************************************************************************
+    //**************************************************************************************************
 //
     //! evaluate the postfix expression
     //! \param postfix expression in Vector data structure
@@ -362,8 +373,9 @@ public class MainActivity  extends AppCompatActivity
             }
             else
             {
-                double val1 = stack.pop();
-                double val2 = stack.pop();
+                double val1,val2;
+                    val1 = stack.pop();
+                    val2 = stack.pop();
 
                 switch (tmp.getChar_val())
                 {
@@ -389,7 +401,7 @@ public class MainActivity  extends AppCompatActivity
         }
         return stack.pop();
     }
-//**************************************************************************************************
+    //**************************************************************************************************
 //
     //! Check if a char is an operator or not
     //! \param char c
@@ -398,15 +410,15 @@ public class MainActivity  extends AppCompatActivity
     boolean isOperator(char c)
     {
         if( c == '+' || c == '-'
-            ||c == '*' || c == '/' || c == '%'
-            || c == '(' || c == ')')
+                ||c == '*' || c == '/' || c == '%'
+                || c == '(' || c == ')')
         {
             return true;
         }
         return false;
     }
 
-//**************************************************************************************************
+    //**************************************************************************************************
 //
     //! find the index of the last operation in the input string
     //! This is a subfunction of the convertion from resultBuffer(string) to
@@ -435,7 +447,7 @@ public class MainActivity  extends AppCompatActivity
         return res;
     }
 
-//**************************************************************************************************
+    //**************************************************************************************************
 //
     //! Handling when user press the '=' button
     //! \param View v from the activity_main.xml
@@ -453,25 +465,48 @@ public class MainActivity  extends AppCompatActivity
         char[] buffer = resultBuffer.toCharArray();
         Vector<element> infixVec = new Vector<>();
         Vector<element> postfixVec;
-//        int j = 0;
+        boolean addZero = false;
         int lastIndexOfOp = lastIndexOfOperator(resultBuffer);
         for(int i = 0; i <= lastIndexOfOp ; i++)
         {
             if(isOperator(buffer[i]))
             {
-                 infixVec.add( new element(element.OPERATOR, buffer[i], 0));
+                if(i >0)
+                {
+                    if (infixVec.lastElement().type != element.NUMBER && buffer[i] == '-')
+                    {
+                        infixVec.add((new element(element.OPERATOR, '(', 0)));
+                        infixVec.add((new element(element.NUMBER, '\0', 0)));
+
+                        addZero = true;
+//                        infixVec.add((new element(element.OPERATOR, ')', 0)));
+                    }
+                }
+                else {
+                    infixVec.add((new element(element.NUMBER, '\0', 0)));
+//                    infixVec.add( new element(element.OPERATOR, buffer[i], 0));
+                }
+                infixVec.add( new element(element.OPERATOR, buffer[i], 0));
             }
             else
             {
                 int j;
                 for(j = i; (!isOperator(buffer[j]))  ; j++);
-                    infixVec.add(new element(element.NUMBER, '\0', Double.valueOf(resultBuffer.substring(i,j))));
-                    i = j - 1;
+                infixVec.add(new element(element.NUMBER, '\0', Double.valueOf(resultBuffer.substring(i,j))));
+                if(addZero == true) {
+                    infixVec.add((new element(element.OPERATOR, ')', 0)));
+                    addZero = false;
+                }
+                i = j - 1;
             }
         }
         if(lastIndexOfOp < resultBuffer.length()-1)
         {
             infixVec.add(new element(element.NUMBER, '\0', Double.valueOf(resultBuffer.substring(lastIndexOfOp+1,resultBuffer.length()))));
+        }
+        if(addZero == true) {
+            infixVec.add((new element(element.OPERATOR, ')', 0)));
+            addZero = false;
         }
         postfixVec = infixToPostfix(infixVec);
         if(postfixVec == null)
